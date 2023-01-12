@@ -1,6 +1,6 @@
-# Respository `<repository-name>`
+# Respository RESPOND-SPA
 
-<repository-description>
+This repository contains the code of the statistical anylisis for the RESPOND randomised controlled trial conducted on healthcare workers in Spain
 
 # Project installation
 
