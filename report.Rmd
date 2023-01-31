@@ -1,0 +1,457 @@
+---
+title: "RESPOND WP4 RCT - Results"
+author: "Roberto Mediavilla"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  comment = '', fig.width = 12, fig.height = 10,
+  warning = FALSE, message = FALSE
+)
+```
+
+# About this document
+
+Here, we present the results of the randomised controlled trial conducted in
+Madrid and Catalonia, as part of the activities of the RESPOND - Healthcare
+workers study ([RESPOND-HCW](www.respond-project.eu)). Roberto Mediavilla wrote
+the code and prepare the results between between September and October, 2022.
+Iago Giné run the analyses independently replicated the results. Federico
+Tedeschi wrote the Statistical Analysis Plan, with the input of the RESPOND
+consortium.
+
+We used the following scripts to run all the analyses.
+
+```{r req scr, message=FALSE, warning=FALSE}
+source("src/req_pack.R", local = knitr::knit_global())
+source("R/respond_functions.R", local = knitr::knit_global())
+source("src/data_cleaning.R", local = knitr::knit_global())
+source("src/main_analysis.R", local = knitr::knit_global())
+source("src/secondary_analysis.R", local = knitr::knit_global())
+```
+
+All the scripts are available in this repository. In compliance with the
+European Union General Data Protection Regulation (GDPR), we do not share any
+dataset to avoid disclosure of participants' personal data,
+
+More information is available here:
+
+-   [Trial registry](https://clinicaltrials.gov/ct2/show/NCT04980326)
+-   [Study protocol](https://doi.org/10.1177/20552076221129084).
+
+## Missing data
+
+The number of people who did not report the primary outcome is
+`r ds_long %>% filter(time == "2" & is.na(phqads_t)) %>% count() %>% as.numeric()`
+at T2,
+`r ds_long %>% filter(time == "3" & is.na(phqads_t)) %>% count() %>% as.numeric()`
+at T3 and
+`r ds_long %>% filter(time == "4" & is.na(phqads_t)) %>% count() %>% as.numeric()`
+at T4. Sociodemographic characteristics at baseline are available for all
+participants, as well as the primary outcome measure.<br> <br> The proportion of
+missing data at the primary endpoint (T4) varies across gender (male \> female)
+and across job types (lowest among physicians).<br>
+
+<br>
+
+The number of days elapsed between assessments is slightly larger on (a) the
+intervention arm and (b) the Barcelona site (SJD), especially at T3. The median
+differences range between 2 and 10 days.<br>
+
+<br>
+
+```{r time bt assessments, echo = FALSE}
+ds_long %>%
+  group_by(institute_abbreviation,
+           castor_record_id,
+           randomization_group,
+           time) %>%
+  mutate(
+    survey_completed_on = date(survey_completed_on)
+  ) %>%
+  select(institute_abbreviation,
+         randomization_group,
+         time,
+         survey_completed_on) %>%
+  pivot_wider(names_from = "time",
+              values_from = "survey_completed_on",
+              names_prefix = "t") %>%
+  mutate(
+    t2_days = t2 - t1,
+    t3_days = t3 - t1,
+    t4_days = t4 - t1
+  ) %>%
+  group_by(randomization_group,
+           institute_abbreviation) %>%
+  summarise(
+    t2_median = median(t2_days, na.rm = T),
+    t3_median = median(t3_days, na.rm = T),
+    t4_median = median(t4_days, na.rm = T)
+  ) %>%
+  pivot_longer(cols = contains("median"),
+               names_to = c("time", ".values"),
+               names_sep = "_") %>%
+  arrange(time) %>%
+  kable(caption = "Time elapsed from baseline to follow-up assessments")
+```
+
+## Adverse events
+
+Only three participants reported suicidal thoughts during the assessments of the
+trial. Please note that one participant reported suicidal thoughts during the
+baseline assessment. We did not exclude him/her because the answer to the
+suicide screening question (suicidal thoughts in the last *two weeks*) was "no".
+We contacted this person after baseline assessment and we checked that he/she
+had experienced suicidal thoughts *three or four weeks* before screening.<br>
+
+<br>
+
+```{r adverse, echo = FALSE}
+ds_long %>% 
+  filter(sbs_1 == "Yes") %>% 
+  select(castor_record_id,
+         institute_abbreviation,
+         time) %>% 
+  mutate(anon_id = as_factor(castor_record_id) %>% 
+           fct_anon()) %>% 
+  relocate(anon_id) %>% 
+  select(!castor_record_id) %>% 
+  mutate(time = fct_recode(time,
+                           "T1. Baseline" = "1",
+                           "T2. Week 7 (post DWM)" = "2",
+                           "T4. Week 21 (follow-up)" = "4")) %>% 
+  kable(caption = "Adverse events")
+```
+
+# Main results
+
+Here, we present the flowchart of the participants. All randomised participants
+were included in the main analysis (i.e., intention-to-treat analysis). <br>
+
+```{r trialover fig, fig.align='center', out.width="100%", fig.cap="Figure. Participants' flowchart", echo=FALSE}
+
+knitr::include_graphics(path = "www/trial_overview.png")
+```
+
+This figure shows an overview of the stepped-care format. All randomised
+participants (n = 115) were offered the first intervention (Doing What Matters
+[DWM]). At week 7, we screened participants to see if they still scored above
+the cut-off score on the K-10 scale, which measures psychological distress.
+Thirteen (11%) had moved from above to below the cut-off, and were therefore not
+offered to step up. Sixteen (14%) did not complete the screening despite being
+reminded about it, and were not offered to step up either. The remaining
+participants (n = 86, 75%) were asked to do the second intervention (Problem
+Management Plus [PM+)]). <br>
+
+```{r steppedcare fig, fig.align='center', out.width="60%", fig.cap="Figure. Stepped care overview", echo=FALSE}
+
+knitr::include_graphics(path = "www/steppedcare_overview.png")
+```
+
+<br>
+
+The characteristics of the participants are presented below. Participants were
+mostly highly educated women who worked as physicians or nurses. Most of them
+had been exposed directly to COVID-19 patients since the beginning of the
+pandemic (i.e., "frontline workers"). <br>
+
+```{r t1, fig.align='center', echo = FALSE}
+gtsummary::as_kable_extra(table1)
+```
+
+<br>
+
+Below, we present the main outcomes of the study. All scores decrease over time
+in both groups. <br>
+
+```{r t2, echo = FALSE}
+gtsummary::as_kable_extra(table2)
+```
+
+<br>
+
+We conducted a linear mixed model to explore the effect of the randomisation
+group on the mental health outcomes over time (please note that participants
+were included in the model as random effects). We provide estimated marginal
+means and robust 95 percent confidence intervals, both crude and adjusted, for
+the primary and secondary outcome measures. The results are compatible with our
+hypothesis that the improvement in mental health outcomes would be larger among
+individuals randomised to the Intervention arm.<br>
+
+```{r emm plot, out.width="90%", fig.align='center', echo = FALSE}
+models_ds_long$phqads_plot
+```
+
+<br>
+
+```{r t3, echo = FALSE}
+models_ds_long$main_summary %>% knit_print()
+```
+
+<br>
+
+```{r es plot, out.width="90%", fig.align='center', echo = FALSE}
+models_ds_long$cohen_plot
+```
+
+# Secondary analyses
+
+### Additional information ITT analyses
+
+This plot shows the change in the K10 score (X axis) from baseline to the first
+follow-up assessment (after DWM) at the participant-level (Y axis). There are
+more people who improve in the Intervention arm (frequency of green lines),
+improvements are larger (length of green lines), and more people screened out
+(observations falling in the grey area), than in the Control arm. <br>
+
+```{r k10 plot, echo = FALSE}
+plots_ds_long$k10_plot
+```
+
+<br>
+
+This table includes the raw data of the models (just in case something very
+specific needs to be checked)
+
+```{r full model description, echo = FALSE}
+models_ds_long$full_summary %>% 
+  mutate(
+    across(
+      where(is.numeric),
+      round, 2))
+```
+
+### Modified per-protocol analyses
+
+Per-protocol analyses include all participants in the control arm and those
+participants in the intervention arm who completed the full intervention
+programme -in our case, that means fully clicking through at least three modules
+in DWM and attending at least four PM+ sessions (only for participants who
+stepped up). We found that `r count(completers_dwm_only) %>% as.numeric()` were
+DWM-only completers and `r count(completers_dwm_pm) %>% as.numeric()` DWM-PM
+completers. <br>
+
+```{r pp desc, echo = FALSE}
+ds_long_pp %>% 
+  filter(time==1) %>% 
+  group_by(randomization_group) %>% 
+  count()
+```
+
+<br>
+
+We replicated the ITT models on this population, i.e., a linear mixed model to
+explore the effect of the randomisation group on the mental health outcomes over
+time (please note that participants were included in the model as random
+effects). We provide estimated marginal means and robust 95 percent confidence
+intervals, both crude and adjusted, for the primary and secondary outcome
+measures. The results are compatible with our hypothesis that the improvement in
+mental health outcomes would be larger among individuals randomised to the
+Intervention arm. The results are also similar to those of the main analysis,
+suggesting robustness. <br>
+
+```{r emm plot pp, out.width="90%", fig.align='center', echo = FALSE}
+models_ds_long_pp$phqads_plot
+```
+
+<br>
+
+```{r t3 pp, echo = FALSE}
+models_ds_long_pp$main_summary %>% knit_print()
+```
+
+<br>
+
+```{r es plot pp, out.width="90%", fig.align='center', echo = FALSE}
+models_ds_long_pp$cohen_plot
+```
+
+### Sensitivity: Distressed participants
+
+Here, we include only the participants who scored above threshold on the PHQ-9
+and/or the GAD-7 at baseline.
+
+```{r sev desc, echo = FALSE}
+ds_long_sev %>% 
+  filter(time == "1") %>% 
+  group_by(randomization_group) %>% 
+  count()
+```
+
+<br>
+
+We replicated the ITT models on this population, i.e., a linear mixed model to
+explore the effect of the randomisation group on the mental health outcomes over
+time (please note that participants were included in the model as random
+effects). We provide estimated marginal means and robust 95 percent confidence
+intervals, both crude and adjusted, for the primary and secondary outcome
+measures. The results are compatible with our hypothesis that the improvement in
+mental health outcomes would be larger among individuals randomised to the
+Intervention arm. The results are also similar to those of the main analysis,
+suggesting robustness. <br>
+
+```{r emm plot sev, out.width="90%", fig.align='center', echo = FALSE}
+models_ds_long_sev$phqads_plot
+```
+
+<br>
+
+```{r t3 sev, echo = FALSE}
+models_ds_long_sev$main_summary %>% knit_print()
+```
+
+<br>
+
+```{r es plot sev, out.width="90%", fig.align='center', echo = FALSE}
+models_ds_long_sev$cohen_plot
+```
+
+### Sensitivity: Binary outcomes
+
+We conducted a sensitivity analysis on the PHQ-9 and GAD-7 well-stablished
+cut-off scores (score \> 9). Since the PHQ-ADS does not provide a validated
+cut-off, we calculated a dichotomous score based on both the PHQ-9 and the GAD-7
+cut-offs. If participants scored below 10 on *both the PHQ-9 and the GAD-7*,
+then they scored below threshold on the PHQ-ADS, whereas if they scored equal or
+higher than 10 *either on the PHQ-9 or/and the GAD-7*, they scored above
+threshold on the PHQ-ADS.
+
+```{r summary bin, results = 'asis', echo = FALSE}
+main_summary_log
+```
+
+<br>
+
+We also calculated the number-needed-to-treat (NNT) for the three dichotomous
+outcomes. .
+
+```{r nnt, echo=TRUE}
+# PHQ-ADS
+
+nnt_phqads
+
+#PHQ-9
+
+nnt_phq9
+
+# GAD-7
+
+nnt_gad7
+```
+
+### Sensitivity: Complete-case analysis
+
+We conducted a sensitivity analysis including only the participants who
+completed all assessments (i.e., a complete-case analysis).
+
+```{r com desc, echo = FALSE}
+ds_long_com %>% 
+  filter(time == "1") %>% 
+  group_by(randomization_group) %>% 
+  count() %>% 
+  kable(caption = "Number of participants in sensitivity analysis")
+```
+
+<br>
+
+We replicated the ITT models on this population, i.e., a linear mixed model to
+explore the effect of the randomisation group on the mental health outcomes over
+time (please note that participants were included in the model as random
+effects). We provide estimated marginal means and robust 95 percent confidence
+intervals, both crude and adjusted, for the primary and secondary outcome
+measures. The results are compatible with our hypothesis that the improvement in
+mental health outcomes would be larger among individuals randomised to the
+Intervention arm. The results are also similar to those of the main analysis,
+suggesting robustness, although estimates appear to be a bit lower. <br>
+
+```{r emm plot com, out.width="90%", fig.align='center', echo = FALSE}
+models_ds_long_com$phqads_plot
+```
+
+<br>
+
+```{r t3 com, echo = FALSE}
+models_ds_long_com$main_summary %>% knit_print()
+```
+
+<br>
+
+```{r es plot com, out.width="90%", fig.align='center', echo = FALSE}
+models_ds_long_com$cohen_plot
+```
+
+### Adherence to intervention protocols
+
+We tested whether intervention providers (i.e., helpers) adhered to the
+intervention protocols. <br>
+
+```{r plot adh mad, echo = FALSE, out.width="80%", fig.align='center', fig.cap="Figure. Adherence in Madrid"}
+plot_adh_mad
+```
+
+<br>
+
+```{r plot adh bcn, out.width="80%", echo = FALSE, fig.align='center', fig.cap="Figure. Adherence in Catalonia"}
+plot_adh_bcn
+```
+
+<br>
+
+```{r adh checklists mad, echo = FALSE}
+dwm_mad_check_tbl
+pm_mad_check_tbl
+```
+
+```{r adh checklists bcn, echo = FALSE}
+dwm_bcn_check_tbl
+pm_bcn_check_tbl
+```
+
+### Cronbach's alpha
+
+Our instruments show high Cronbachs' alphas at baseline. <br>
+
+```{r cronbach, echo = TRUE}
+# PHQ-9
+ds_long %>% 
+  filter(time == 1) %>% 
+  select(phq9_01:phq9_09) %>% 
+  psych::alpha()
+
+# GAD-7
+
+ds_long %>% 
+  filter(time == 1) %>% 
+  select(gad7_1:gad7_7) %>% 
+  psych::alpha()
+
+# PCL-5
+
+ds_long %>% 
+  filter(time == 1) %>% 
+  select(pcl5_1:pcl5_8) %>% 
+  psych::alpha()
+
+# PHQ-ADS
+
+ds_long %>% 
+  filter(time == 1) %>% 
+  select(starts_with(c("phq", "gad"))) %>% 
+  select(!c(phq9_10,
+            phq9_t, 
+            phq9_cut, 
+            phq9_cat, 
+            gad7_t, 
+            gad7_cut, 
+            phqads_t, 
+            phqads_cat, 
+            phqads_cut)) %>% 
+  psych::alpha()
+```
