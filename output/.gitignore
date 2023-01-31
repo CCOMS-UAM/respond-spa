@@ -1,0 +1,4 @@
+# Rmd outputs formats, other documents and files
+*.docx
+*.html
+*.pdf
