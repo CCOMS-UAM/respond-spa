@@ -92,4 +92,3 @@ The file structure of this repository is as follows:
 
 Use the folders as indicated to store the different files and generate the
 outputs of the processes
-
