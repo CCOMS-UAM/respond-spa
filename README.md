@@ -1,7 +1,7 @@
 # Respository `respond-spa`
 
 Analytic code of the RESPOND-HCWs study. Pseudonymised data will only be shared
-within the RESPOND research consortium, in compliance with the GDPR and the
+within the RESPOND research consortium, in compliance with the GDPR and with the
 Consortium Agreement. De-identified (i.e., anonymised) individual participant
 data supporting the primary analysis of the trial is available from Dataverse
 (<https://doi.org/10.21950/HN1HNO>) upon reasonable request, beginning 3 months
@@ -9,7 +9,7 @@ and ending 5 years following article publication.
 
 For more information, please visit <https://www.respond-project.eu> or contact
 Roberto Mediavilla
-([roberto.mediavilla\@uam.es](mailto:roberto.mediavilla@uam.es){.email})
+([roberto.mediavilla\@uam.es](mailto:roberto.mediavilla@uam.es)).
 
 # Project installation
 
