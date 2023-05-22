@@ -158,10 +158,6 @@ ds_long_test %>%
          -covid19_3) %>%
   skimr::skim() # looks good
 
-ds_long_test %>%
-  group_by(institute_abbreviation) %>%
-  skimr::skim()
-
 #### New dataset ####
 
 ds_long <- ds_long_test
@@ -181,3 +177,5 @@ ds_wide <-
               names_from = time,
               names_glue = "{.value}_t{time}",
               values_from = c(soc_01:btq_10))
+
+# saveRDS(ds_wide, "dat/ds_long_resil.Rds")
