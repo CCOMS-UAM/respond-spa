@@ -13,6 +13,11 @@
 #   Adherence to intervention protocol: collected using DWM metadata
 #   and facilitator-reported PM+ data
 
+# To avoid conflicts
+
+
+# library(tidyverse)
+
 # Screening data
 
 ds_study_mad <-
@@ -116,7 +121,7 @@ dwm_adherence_mad <-
              sep = ";") %>%
   clean_names() %>%
   select(!x) %>%
-  filter(str_detect(research_id,
+  filter(stringr::str_detect(research_id,
                     "UAM"))
 
 dwm_adherence_bcn <-
@@ -227,7 +232,7 @@ ds_study <-
   mutate(
     across(
       .cols = contains("helper"),
-      .fns = as_character
+      .fns = as.character
     )
   ) %>%
   mutate(helper_dwm = if_else(institute_abbreviation == "UAM",
@@ -731,7 +736,7 @@ ds_long <- droplevels(ds_long)
 
 ds_long <-
   ds_long %>%
-  var_labels(randomization_group = "Group",
+  sjlabelled::var_labels(randomization_group = "Group",
              castor_record_id = "Participant ID",
              survey_completed_on = "Assessment date",
              institute_abbreviation = "Site",

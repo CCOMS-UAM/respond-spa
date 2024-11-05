@@ -8,7 +8,6 @@ respond_wp4_pack <-
        "lubridate",
        "sjlabelled",
        "stringr",
-       "tidyverse",
        "kableExtra",
        "readr",
        "janitor",
@@ -28,7 +27,8 @@ respond_wp4_pack <-
        "ggpubr",
        "patchwork",
        "lmerTest",
-       "genodds")
+       "genodds",
+       "tidyverse") # keep last
 
 lapply(respond_wp4_pack, require, character.only = TRUE)
 
