@@ -770,5 +770,18 @@ ds_long <-
              csri_sp_nurse_i_n = "Individual appointments with nurse (n)",
              csri_sp_nurse_i_t = "Individual appointments with nurse (time)",
              csri_sp_nurse_g_n = "Group appointments with nurse (n)",
-             csri_sp_nurse_g_t = "Group appointments with nurse (time)")
+             csri_sp_nurse_g_t = "Group appointments with nurse (time)",
+             le_1 = "Serious illnes, accident",
+             le_2 = "Death",
+             le_3 = "Break up, divorce",
+             btq_01 = "War",
+             btq_02 = "Accident",
+             btq_03 = "Natural disaster",
+             btq_04 = "Serious illness",
+             btq_05 = "Physical violence (childhood)",
+             btq_06 = "Physical violence",
+             btq_07 = "Sexual assault",
+             btq_08 = "Physical danger",
+             btq_09 = "Death",
+             btq_10 = "Witness")
 

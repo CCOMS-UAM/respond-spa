@@ -1,0 +1,256 @@
+---
+title: "nat_comms_exp"
+author: "Roberto Mediavilla"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source("src/req_pack.R")
+source("src/data_cleaning.R")
+```
+
+```{r}
+ds_long <- readRDS("dat/ds_long_resil.Rds")
+```
+
+# Check inconsistencies
+
+```{r}
+ds1 <- ds_long |> select(!c(soc_1_1, soc_16_1, soc_17_1))
+ds2 <- ds_long_resil |> select(!c(soc_1_1, soc_16_1, soc_17_1))
+
+identical(ds1, ds2)
+
+all.equal(ds1, ds2)
+
+comparison <- compare::compare(ds1, ds2, allowAll = TRUE)
+
+print(comparison)
+
+only_in
+```
+
+```{r}
+differences <- map2_dfr(ds1, ds2, ~ .x != .y)
+colSums(differences)
+```
+
+```{r}
+
+# UAM
+
+ds1 |> 
+  filter(institute_abbreviation == "UAM") |> 
+  select(contains(c("btq", "le_"))) |> 
+  skimr::skim()
+
+ds2 |> 
+  filter(institute_abbreviation == "UAM") |> 
+  select(contains(c("btq", "le_"))) |> 
+  skimr::skim() # all good
+
+# SJD
+
+ds1 |> 
+  filter(institute_abbreviation == "SJD") |> 
+  select(contains(c("btq", "le_"))) |> 
+  skimr::skim()
+
+ds2 |> 
+  filter(institute_abbreviation == "SJD") |> 
+  select(contains(c("btq", "le_"))) |> 
+  skimr::skim() # changes
+
+# Triple check
+
+ds1 |> 
+  filter(institute_abbreviation == "SJD") |> 
+  select(contains(c("pas", "eg_", "ec_"))) |> 
+  skimr::skim()
+
+ds2 |> 
+  filter(institute_abbreviation == "SJD") |> 
+  select(contains(c("pas", "eg_", "ec_"))) |> 
+  skimr::skim() # the rest seem to work fine
+```
+
+```{r}
+ds1_red <- 
+  ds1 |> 
+  filter(institute_abbreviation == "SJD") |> 
+  select(castor_record_id,
+         time,
+         contains(c("btq", "le_")))
+
+ds2_red <- 
+  ds2 |> 
+  filter(institute_abbreviation == "SJD") |> 
+  select(castor_record_id,
+         time,
+         contains(c("btq", "le_")))
+
+differences <- map2_dfr(ds1_red, ds2_red, ~ .x != .y)
+colSums(differences)
+
+```
+
+```{r}
+stress_bcn <-
+  read_delim("dat/BCN/Quality control_LIR.csv", delim = ";") %>%
+  select(-19) # bug
+
+# BTQ
+
+stress_bcn |> 
+  select(wave, starts_with("btq")) |> 
+  filter(wave == "2") |> 
+  skimr::skim() # One observation that is wrong
+
+stress_bcn |> 
+  select(wave, starts_with("btq")) |> 
+  group_by(wave) |> 
+  skimr::skim()
+
+
+ds_long |> 
+  filter(institute_abbreviation == "SJD") |> 
+  select(time, starts_with("btq")) |> 
+  group_by(time) |> 
+  skimr::skim()
+
+# LE
+```
+
+# required variables
+
+```{r}
+ds_long <-
+  ds_long %>%
+  mutate(btq_total = select(., starts_with("btq_")) %>%
+           rowSums(.)) |>
+  group_by(castor_record_id) |>
+  mutate(btq_total_base = btq_total[time==1]) |>
+  ungroup()
+
+ds_long <-
+  ds_long %>%
+  mutate(le_total = select(., starts_with("le_")) %>%
+           rowSums(.)) |>
+  group_by(castor_record_id) |>
+  mutate(le_base = le_total[time==1]) |>
+  ungroup()
+```
+
+# BTQ
+
+## Unfiltered dataset
+
+```{r}
+ds_long %>%
+  ggplot(aes(x = time,
+             y = btq_total,
+             colour = randomization_group)) +
+  geom_boxplot()
+
+ds_long %>%
+  group_by(time, randomization_group) %>%
+  summarise(
+    mean = mean(btq_total, na.rm = TRUE),
+    sd = sd(btq_total, na.rm = TRUE),
+    median = median(btq_total, na.rm = TRUE),
+    n = sum(!is.na(btq_total))
+  )
+
+ds_long %>%
+  lm(btq_total ~ randomization_group*time, .) %>%
+  summary()
+```
+
+## Filtered dataset
+
+```{r}
+not_outliers <-
+  ds_long %>%
+  filter(time == "1") |>
+  mutate(IQR = IQR(btq_total, na.rm = TRUE),
+         lower_bound = quantile(btq_total, 0.25, na.rm = TRUE) - 1.5 * IQR,
+         upper_bound = quantile(btq_total, 0.75, na.rm = TRUE) + 1.5 * IQR) %>%
+  filter(btq_total >= lower_bound & btq_total <= upper_bound) |>
+  pull(castor_record_id) |>
+  unique()
+
+ds_long_cleaned <-
+  ds_long %>%
+  filter(castor_record_id %in% not_outliers)
+
+# removes 15 observations
+```
+
+```{r}
+ds_long_cleaned %>%
+  ggplot(aes(x = time,
+             y = btq_total,
+             colour = randomization_group)) +
+  geom_boxplot()
+
+ds_long_cleaned |>
+  group_by(time, randomization_group) %>%
+  summarise(mean = mean(btq_total, na.rm = TRUE),
+            sd = sd(btq_total, na.rm = TRUE),
+            median = median(btq_total, na.rm = TRUE))
+
+lm(btq_total ~ randomization_group*time, ds_long_cleaned) %>%
+  summary()
+```
+
+Moderation
+
+```{r}
+lm(phqads_t ~ randomization_group*time*btq_total_base, ds_long_cleaned) %>%
+  summary() # no interactive effects
+
+lm(phqads_t ~ randomization_group*time + btq_total, ds_long_cleaned) %>%
+  summary() # effect holds after adjusting for baseline confounding
+```
+
+# life events
+
+## Unfiltered dataset
+
+```{r}
+ds_long %>%
+  ggplot(aes(x = time,
+             y = le_total,
+             colour = randomization_group)) +
+  geom_boxplot()
+
+
+ds_long %>%
+  group_by(time, randomization_group) %>%
+  summarise(mean = mean(le_total, na.rm = TRUE),
+            sd = sd(le_total, na.rm = TRUE),
+            median = median(le_total, na.rm = TRUE))
+
+ds_long %>%
+  lm(le_total ~ randomization_group*time, .) %>%
+  summary()
+```
+
+no significant differences at baseline, no interactive effects at follow-up
+
+moderation
+
+```{r}
+
+
+lm(phqads_t ~ randomization_group*time*le_base, ds_long) %>%
+  summary() # no interactive effects
+
+lm(phqads_t ~ randomization_group*time + le_base, ds_long) %>%
+  summary() # effect holds after adjusting for baseline confounding
+```

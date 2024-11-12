@@ -78,8 +78,11 @@ stress_bcn <-
 stress_bcn <-
   stress_bcn %>%
   mutate(covid19_1 = fct_recode(covid19_1,
-                                "No" = "No",
-                                 "Probable" = "Probablemente, pero no tengo ninguna prueba formal (ej., antígenos, PCR)",
+                                "No" =
+                                  "No",
+                                 "Probable" =
+                                  "Probablemente, pero no tengo ninguna prueba formal
+                                (ej., antígenos, PCR)",
                                  "Yes" = "Sí, confirmado por pruebas formales de COVID-19 (ej., antígenos, PCR)"),
          covid19_1_1 = fct_recode(covid19_1_1,
                                   "No or mild symptoms" = "Sin síntomas o con síntomas leves que no requirieron hospitalización",
