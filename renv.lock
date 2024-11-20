@@ -441,6 +441,13 @@
       "Repository": "CRAN",
       "Hash": "14eb0596f987c71535d07c3aff814742"
     },
+    "compare": {
+      "Package": "compare",
+      "Version": "0.2-6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "aa1af0150d382f15818bee308a73436f"
+    },
     "corrplot": {
       "Package": "corrplot",
       "Version": "0.95",
@@ -1322,23 +1329,6 @@
       ],
       "Hash": "df58958f293b166e4ab885ebcad90e02"
     },
-    "openxlsx": {
-      "Package": "openxlsx",
-      "Version": "4.2.7.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "Rcpp",
-        "grDevices",
-        "methods",
-        "stats",
-        "stringi",
-        "utils",
-        "zip"
-      ],
-      "Hash": "14304e44a0f90fa2d0f905472333c561"
-    },
     "pander": {
       "Package": "pander",
       "Version": "0.6.5",
@@ -2001,13 +1991,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "51dab85c6c98e50a18d7551e9d49f76c"
-    },
-    "zip": {
-      "Package": "zip",
-      "Version": "2.3.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "fcc4bd8e6da2d2011eb64a5e5cc685ab"
     },
     "zoo": {
       "Package": "zoo",
